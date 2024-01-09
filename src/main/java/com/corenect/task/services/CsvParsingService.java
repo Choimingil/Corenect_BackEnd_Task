@@ -6,16 +6,11 @@ import com.corenect.task.entities.StationByRoute;
 import com.corenect.task.repositories.RouteRepository;
 import com.corenect.task.repositories.StationByRouteRepository;
 import com.corenect.task.repositories.StationRepository;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -138,7 +133,7 @@ public class CsvParsingService implements CommandLineRunner {
     }
 
     @Override
-//    @Transactional
+    @Transactional
     public void run(String... args) throws Exception {
         loadStationCsvData();
         loadRouteCsvData();
