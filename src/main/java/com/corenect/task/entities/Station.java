@@ -11,8 +11,6 @@ import lombok.ToString;
 @Setter
 @ToString
 public class Station {
-    /* csv parsing : NODE_ID,정류소명,X좌표,Y좌표,정류소타입 */
-
     // 정류장 ID
     @Id
     private long stationId;

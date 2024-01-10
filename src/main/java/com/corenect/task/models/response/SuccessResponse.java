@@ -1,4 +1,4 @@
-package com.corenect.task.models;
+package com.corenect.task.models.response;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

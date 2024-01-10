@@ -1,10 +1,8 @@
 package com.corenect.task.services;
 
-import com.corenect.task.entities.Route;
 import com.corenect.task.entities.Station;
-import com.corenect.task.entities.StationByRoute;
-import com.corenect.task.repositories.RouteRepository;
-import com.corenect.task.repositories.StationByRouteRepository;
+import com.corenect.task.entities.Line;
+import com.corenect.task.repositories.LineRepository;
 import com.corenect.task.repositories.StationRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.csv.CSVFormat;
@@ -15,21 +13,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class CsvParsingService implements CommandLineRunner {
     private final StationRepository stationRepository;
-    private final RouteRepository routeRepository;
-    private final StationByRouteRepository stationByRouteRepository;
+    private final LineRepository lineRepository;
     private final String path = "src/main/resources/";
-    private final Set<String> routeIdSet = new HashSet<>();
     private final Set<String> stationIdSet = new HashSet<>();
+    private final Set<String> stationByLineSet = new HashSet<>();
 
+    /**
+     * Station 정보 H2 데이터베이스에 저장
+     * @throws IOException
+     */
     private void loadStationCsvData() throws IOException {
         List<Station> stationList = new ArrayList<>();
         try (Reader reader = new FileReader(path+"stationInfo.csv");
@@ -58,85 +56,48 @@ public class CsvParsingService implements CommandLineRunner {
         }
     }
 
-    private void loadRouteCsvData() throws IOException {
-        List<Route> routeList = new ArrayList<>();
+    /**
+     * Line 데이터 H2 데이터베이스에 저장
+     * @throws IOException
+     */
+    private void loadLineCsvData() throws IOException {
+        List<Line> stationByLineList = new ArrayList<>();
+        int csvNum = 0;
+        while(csvNum++ <6){
+            // 노선번호 별 정류장 데이터가 너무 커서 쪼갬
+            try (Reader reader = new FileReader(path+"lineInfo/output_chunk_"+csvNum+".csv");
+                 CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT)) {
 
-        try (Reader reader = new FileReader(path+"routeInfo.csv");
-             CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT)) {
+                // "노선번호","표준버스정류장ID"
+                for (CSVRecord csvRecord : csvParser) {
+                    // 노선번호
+                    String lineName = csvRecord.get(0);
 
-            // 업체명,노선번호,유형,기점명,종점명,인가대수,배차간격,거리,운행시간,최소배차,최대배차,첫차시간,막차시간
-            for (CSVRecord csvRecord : csvParser) {
-                String routeId = csvRecord.get(1);
-                String routeType = csvRecord.get(2);
-                String departureStation = csvRecord.get(3);
-                String arriveStation = csvRecord.get(4);
-                int approvedNum = Integer.parseInt(csvRecord.get(5));
-                int dispatchInterval = Integer.parseInt(csvRecord.get(6));
-                String distance = csvRecord.get(7);
-                String operatingTime = csvRecord.get(8);
-                int minBetween = Integer.parseInt(csvRecord.get(9));
-                int maxBetween = Integer.parseInt(csvRecord.get(10));
-                String startOperatingTime = csvRecord.get(11);
-                String lastOperatingTime = csvRecord.get(12);
+                    // 정류장 ID
+                    String stationId = csvRecord.get(1);
 
-                if(!routeIdSet.contains(routeId)){
-                    routeList.add(Route.builder()
-                            .routeId(routeId)
-                            .routeType(routeType)
-                            .departureStation(departureStation)
-                            .arriveStation(arriveStation)
-                            .approvedNum(approvedNum)
-                            .dispatchInterval(dispatchInterval)
-                            // csv 파싱 시 값이 존재하지 않는 데이터는 음수 처리
-                            .distance(distance.equals("") ? -1.0 : Double.parseDouble(distance))
-                            .operatingTime(operatingTime.equals("") ? -1.0 : Double.parseDouble(operatingTime))
-                            .minBetween(minBetween)
-                            .maxBetween(maxBetween)
-                            .startOperatingTime(startOperatingTime)
-                            .lastOperatingTime(lastOperatingTime)
-                            .build());
-                    routeIdSet.add(routeId);
-                }
-            }
-            routeRepository.saveAll(routeList);
-        }
-    }
-
-    private void loadStationByRouteCsvData() throws IOException {
-        List<StationByRoute> stationByRouteList = new ArrayList<>();
-        try (Reader reader = new FileReader(path+"stationRouteInfo.csv");
-             CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT)) {
-            Set<String> currRouteIdSet = new HashSet<>();
-            Set<String> currStationIdSet = new HashSet<>();
-
-            // "노선번호","표준버스정류장ID"
-            for (CSVRecord csvRecord : csvParser) {
-                // 노선번호
-                String routeId = csvRecord.get(0);
-
-                // 정류장 ID
-                String stationId = csvRecord.get(1);
-
-                if(routeIdSet.contains(routeId) && stationIdSet.contains(stationId)){
-                    if(!currRouteIdSet.contains(routeId) && !currStationIdSet.contains(stationId)){
-                        stationByRouteList.add(StationByRoute.builder()
-                                .routeId(routeId)
-                                .stationId(Long.parseLong(stationId))
-                                .build());
-                        currRouteIdSet.add(routeId);
-                        currStationIdSet.add(stationId);
+                    // 현재 Station 엔티티에 등록되지 않은 아이디는 제외
+                    if(stationIdSet.contains(stationId)){
+                        // 이미 등록된 데이터 pair는 제외 (중복 제거)
+                        String key = stationId + " " + lineName;
+                        if(!stationByLineSet.contains(key)){
+                            stationByLineList.add(Line.builder()
+                                    .lineName(lineName)
+                                    .stationId(Long.parseLong(stationId))
+                                    .build());
+                            stationByLineSet.add(key);
+                        }
                     }
                 }
             }
         }
-        stationByRouteRepository.saveAll(stationByRouteList);
+        lineRepository.saveAll(stationByLineList);
     }
 
     @Override
     @Transactional
     public void run(String... args) throws Exception {
         loadStationCsvData();
-        loadRouteCsvData();
-        loadStationByRouteCsvData();
+        loadLineCsvData();
     }
 }
