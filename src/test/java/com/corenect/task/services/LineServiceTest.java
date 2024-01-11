@@ -2,6 +2,9 @@ package com.corenect.task.services;
 
 import com.corenect.task.entities.Line;
 import com.corenect.task.entities.Station;
+import com.corenect.task.models.Edge;
+import com.corenect.task.models.StationDistInfo;
+import com.corenect.task.models.StationInfo;
 import com.corenect.task.repositories.LineRepository;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
@@ -32,18 +35,46 @@ class LineServiceTest {
     private LineRepository lineRepository;
 
     @Test
-    public void getLineTest(){
-        List<Line> expectedValue = lineRepository.findByLineIdIn(new ArrayList<>(List.of(10379L,11794L,24221L,24522L,30300L,32675L,34284L)));
-        assertThat(expectedValue).usingRecursiveComparison().isEqualTo(lineService.getLine(103000014));
+    public void getStationInfoMapTest(){
+        Map<Long,Station> map = lineService.getStationInfoMap(stationService.getStationInfoList(lineService.getAllStationList()));
+        for(Map.Entry entry : map.entrySet()){
+            logger.info(entry.getKey() + " : " + entry.getValue().toString());
+        }
     }
 
     @Test
-    public void getLineListTest(){
-        List<Line> expectedValue = lineRepository.findByLineIdIn(new ArrayList<>(List.of(10379L,11794L,24221L,24522L,30300L,32675L,34284L,12143L,13723L,24313L,24780L,25206L,30322L,32741L,34447L,21638L,24795L)));
-        List<Station> stationList = stationService.getStationList(127.0366,37.5636,150);
-        Set<Long> stationIdSet = stationList.stream().map(Station::getStationId).collect(Collectors.toSet());
-        List<Line> actualValue = lineService.getLineList(stationIdSet);
-        actualValue.sort(Comparator.comparingLong(Line::getLineId));
-        assertThat(expectedValue).usingRecursiveComparison().isEqualTo(actualValue);
+    public void setNearestStationTest(){
+        PriorityQueue<StationDistInfo> startStationQueue = new PriorityQueue<>();
+        PriorityQueue<StationDistInfo> endStationQueue = new PriorityQueue<>();
+        List<StationInfo> allStationInfoList = stationService.getStationInfoList(lineService.getAllStationList());
+        lineService.setNearestStation(allStationInfoList,startStationQueue,endStationQueue,127.0360410344,37.563354049,127.0,37.4);
+
+        while(!startStationQueue.isEmpty()) logger.info("start : " + startStationQueue.poll().toString());
+        while(!endStationQueue.isEmpty()) logger.info("end : " + endStationQueue.poll().toString());
+    }
+
+    @Test
+    public void setGraphTest(){
+        List<StationInfo> allStationInfoList = stationService.getStationInfoList(lineService.getAllStationList());
+        Map<Long,Station> stationMap = lineService.getStationInfoMap(allStationInfoList);
+        PriorityQueue<StationDistInfo> startStationQueue = new PriorityQueue<>();
+        PriorityQueue<StationDistInfo> endStationQueue = new PriorityQueue<>();
+        lineService.setNearestStation(allStationInfoList,startStationQueue,endStationQueue,127.0360410344,37.563354049,127.0,37.4);
+
+
+        Map<String, List<Edge>> graph = new HashMap<>();
+        while(!startStationQueue.isEmpty() || !endStationQueue.isEmpty()){
+            Queue<StationDistInfo> queue = new ArrayDeque<>();
+            if(!startStationQueue.isEmpty()) queue.add(startStationQueue.poll());
+            if(!endStationQueue.isEmpty()) queue.add(endStationQueue.poll());
+            lineService.setGraph(stationMap,allStationInfoList,graph,queue);
+        }
+
+        for(Map.Entry<String, List<Edge>> entry : graph.entrySet()){
+            List<Edge> list = entry.getValue();
+            for(Edge edge : list){
+                logger.info(entry.getKey() + " : " + edge.toString());
+            }
+        }
     }
 }

@@ -58,15 +58,15 @@ class StationControllerTest {
                 "isSuccess", true,
                 "message", "성공적으로 조회되었습니다.",
                 "result", List.of(
-                        Map.of("lines", List.of("성동08", "성동03-1"), "station", Map.of("stationId", 103900115, "stationName", "성동구청", "type", "마을버스", "x", 127.0360410344, "y", 37.563354049)),
-                        Map.of("lines", List.of("145", "421", "110B", "148", "2015", "2222", "성동03-1", "141"), "station", Map.of("stationId", 103900085, "stationName", "성동구청", "type", "마을버스", "x", 127.0364064374, "y", 37.5641355512)),
-                        Map.of("lines", List.of("145", "421", "148", "2015", "110A", "2222", "141"), "station", Map.of("stationId", 103000014, "stationName", "성동구청", "type", "가로변시간", "x", 127.0359164214, "y", 37.5631265853))
+                        Map.of("lines", List.of("성동08", "성동03-1"), "station", Map.of("stationId", 103900115, "stationName", "성동구청", "type", "마을버스", "lon", 127.0360410344, "lat", 37.563354049)),
+                        Map.of("lines", List.of("145", "421", "110B", "148", "2015", "2222", "성동03-1", "141"), "station", Map.of("stationId", 103900085, "stationName", "성동구청", "type", "마을버스", "lon", 127.0364064374, "lat", 37.5641355512)),
+                        Map.of("lines", List.of("145", "421", "148", "2015", "110A", "2222", "141"), "station", Map.of("stationId", 103000014, "stationName", "성동구청", "type", "가로변시간", "lon", 127.0359164214, "lat", 37.5631265853))
                 )
         );
 
         MvcResult result = mvc.perform(get("/stations")
-                        .param("Lng","127.0365")
-                        .param("Lat","37.5635")
+                        .param("lon","127.0365")
+                        .param("lat","37.5635")
                         .contentType(MediaType.APPLICATION_JSON)
                 )
                 .andExpect(status().isOk())
@@ -84,15 +84,15 @@ class StationControllerTest {
                 "isSuccess", true,
                 "message", "성공적으로 조회되었습니다.",
                 "result", List.of(
-                        Map.of("lines", List.of("성동08", "성동03-1"), "station", Map.of("stationId", 103900115, "stationName", "성동구청", "type", "마을버스", "x", 127.0360410344, "y", 37.563354049)),
-                        Map.of("lines", List.of("145", "421", "110B", "148", "2015", "2222", "성동03-1", "141"), "station", Map.of("stationId", 103900085, "stationName", "성동구청", "type", "마을버스", "x", 127.0364064374, "y", 37.5641355512)),
-                        Map.of("lines", List.of("145", "421", "148", "2015", "110A", "2222", "141"), "station", Map.of("stationId", 103000014, "stationName", "성동구청", "type", "가로변시간", "x", 127.0359164214, "y", 37.5631265853))
+                        Map.of("lines", List.of("성동08", "성동03-1"), "station", Map.of("stationId", 103900115, "stationName", "성동구청", "type", "마을버스", "lon", 127.0360410344, "lat", 37.563354049)),
+                        Map.of("lines", List.of("145", "421", "110B", "148", "2015", "2222", "성동03-1", "141"), "station", Map.of("stationId", 103900085, "stationName", "성동구청", "type", "마을버스", "lon", 127.0364064374, "lat", 37.5641355512)),
+                        Map.of("lines", List.of("145", "421", "148", "2015", "110A", "2222", "141"), "station", Map.of("stationId", 103000014, "stationName", "성동구청", "type", "가로변시간", "lon", 127.0359164214, "lat", 37.5631265853))
                 )
         );
 
         MvcResult result = mvc.perform(get("/stations")
-                        .param("Lng","127.0365")
-                        .param("Lat","37.5635")
+                        .param("lon","127.0365")
+                        .param("lat","37.5635")
                         .param("radius","100")
                         .contentType(MediaType.APPLICATION_JSON)
                 )
@@ -110,7 +110,7 @@ class StationControllerTest {
                 "code", 200,
                 "isSuccess", true,
                 "message", "성공적으로 조회되었습니다.",
-                "result", Map.of("lines", List.of("145", "421", "148", "2015", "110A", "2222", "141"), "station", Map.of("stationId", 103000014, "stationName", "성동구청", "type", "가로변시간", "x", 127.0359164214, "y", 37.5631265853))
+                "result", Map.of("lines", List.of("145", "421", "148", "2015", "110A", "2222", "141"), "station", Map.of("stationId", 103000014, "stationName", "성동구청", "type", "가로변시간", "lon", 127.0359164214, "lat", 37.5631265853))
         );
 
         MvcResult result = mvc.perform(get("/station")

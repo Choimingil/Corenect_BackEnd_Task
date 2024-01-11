@@ -37,16 +37,16 @@ public class CsvParsingService implements CommandLineRunner {
             for (CSVRecord csvRecord : csvParser) {
                 String stationId = csvRecord.get(0);
                 String stationName = csvRecord.get(2);
-                double x = Double.parseDouble(csvRecord.get(3));
-                double y = Double.parseDouble(csvRecord.get(4));
+                double lon = Double.parseDouble(csvRecord.get(3));
+                double lat = Double.parseDouble(csvRecord.get(4));
                 String type = csvRecord.get(5);
 
                 if(!stationIdSet.contains(stationId)){
                     stationList.add(Station.builder()
                             .stationId(Long.parseLong(stationId))
                             .stationName(stationName)
-                            .x(x)
-                            .y(y)
+                            .lon(lon)
+                            .lat(lat)
                             .type(type)
                             .build());
                     stationIdSet.add(stationId);
