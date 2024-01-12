@@ -4,20 +4,20 @@ public abstract class AbstractService {
     /**
      * Haversine 공식을 사용하여 두 지점 간의 거리 계산
      * @param lat1
-     * @param lng1
+     * @param lon1
      * @param lat2
-     * @param lng2
+     * @param lon2
      * @return
      */
-    protected double calculateDistance(double lat1, double lng1, double lat2, double lng2) {
+    protected double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
         // 지구 반지름 (m)
         double EARTH_RADIUS = 6371000;
 
         // 라디안으로 변환
         double lat1Rad = Math.toRadians(lat1);
-        double lon1Rad = Math.toRadians(lng1);
+        double lon1Rad = Math.toRadians(lon1);
         double lat2Rad = Math.toRadians(lat2);
-        double lon2Rad = Math.toRadians(lng2);
+        double lon2Rad = Math.toRadians(lon2);
 
         // 위도 및 경도의 차이
         double dlat = lat2Rad - lat1Rad;

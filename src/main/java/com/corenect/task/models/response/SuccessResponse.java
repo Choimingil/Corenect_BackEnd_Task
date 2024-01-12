@@ -12,6 +12,7 @@ public class SuccessResponse extends Response {
     @RequiredArgsConstructor
     @Getter
     public enum of{
+        NO_STATION_SUCCESS(200,"반경 내에 정류장이 존재하지 않습니다."),
         GET_SUCCESS(200,"성공적으로 조회되었습니다.");
 
         private final int code;

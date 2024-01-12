@@ -100,4 +100,52 @@ public class StationService extends AbstractService {
         for(Line line : lineList) stationInfo.getLines().add(line.getLineName());
         return stationInfo;
     }
+
+    /**
+     * 입력받은 두 좌표 사이의 중점을 중심으로 하고 두 좌표 사이의 거리를 반지름으로 하는 공간 내의 정류장 Map으로 얻기
+     * @param startLon
+     * @param startLat
+     * @param endLon
+     * @param endLat
+     * @return
+     */
+    public Map<Long,StationInfo> getStationInfoMap(double startLon, double startLat, double endLon, double endLat){
+        double midLon = (startLon+endLon)/2.0;
+        double midLat = (startLat+endLat)/2.0;
+        double radius = calculateDistance(startLat,startLon,endLat,endLon);
+        List<StationInfo> stationInfoList = getStationInfoList(getStationList(midLon,midLat,radius));
+        return stationInfoList.stream()
+                .collect(Collectors.toMap(
+                        stationInfo -> stationInfo.getStation().getStationId(),
+                        stationInfo -> stationInfo
+                ));
+    }
+
+    /**
+     * 출발지를 기준으로 가까운 역을 우선순위 큐에 오름차순으로 정렬
+     * @param stationInfoMap
+     * @param lon
+     * @param lat
+     * @return
+     */
+    public PriorityQueue<StationInfo> getNearerStationQueue(Map<Long,StationInfo> stationInfoMap, double lon, double lat){
+        PriorityQueue<StationInfo> queue = new PriorityQueue<>((o1, o2) -> {
+            double d1 = calculateDistance(lat,lon,o1.getStation().getLat(),o1.getStation().getLon());
+            double d2 = calculateDistance(lat,lon,o2.getStation().getLat(),o2.getStation().getLon());
+            return (int)(d1-d2);
+        });
+        for(Map.Entry<Long,StationInfo> entry : stationInfoMap.entrySet()) queue.add(entry.getValue());
+        return queue;
+    }
+
+    /**
+     * 현재 위치에서 역까지의 거리 구하기
+     * @param station
+     * @param lon
+     * @param lat
+     * @return
+     */
+    public double getDistance(Station station, double lon, double lat){
+        return calculateDistance(lat,lon,station.getLat(),station.getLon());
+    }
 }
