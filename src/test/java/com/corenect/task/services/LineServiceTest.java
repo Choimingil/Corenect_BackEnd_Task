@@ -47,13 +47,13 @@ class LineServiceTest {
         Map<Long,StationInfo> stationInfoMap = stationService.getStationInfoMap(startLon, startLat, endLon, endLat);
         PriorityQueue<StationInfo> nearerStationAtStartQueue = stationService.getNearerStationQueue(stationInfoMap,startLon,startLat);
         List<StationInfo> stationInfoList = new ArrayList<>();
-        Map<String, Map<String,Edge>> graph = new HashMap<>();
+        Map<Long, Map<String,Edge>> graph = new HashMap<>();
         while(!nearerStationAtStartQueue.isEmpty()){
             StationInfo curr = nearerStationAtStartQueue.poll();
             lineService.setGraph(stationInfoMap,stationInfoList,graph,curr);
         }
 
-        for(Map.Entry<String, Map<String,Edge>> entry : graph.entrySet()){
+        for(Map.Entry<Long, Map<String,Edge>> entry : graph.entrySet()){
             Map<String,Edge> edgeMap = entry.getValue();
             for(Map.Entry<String,Edge> edgeEntry : edgeMap.entrySet()){
                 Edge edge = edgeEntry.getValue();
@@ -74,7 +74,7 @@ class LineServiceTest {
 
         Station startStation = nearerStationAtStartQueue.peek().getStation();
         List<StationInfo> stationInfoList = new ArrayList<>();
-        Map<String, Map<String,Edge>> graph = new HashMap<>();
+        Map<Long, Map<String,Edge>> graph = new HashMap<>();
         while(!nearerStationAtStartQueue.isEmpty()){
             StationInfo curr = nearerStationAtStartQueue.poll();
             lineService.setGraph(stationInfoMap,stationInfoList,graph,curr);
@@ -104,7 +104,7 @@ class LineServiceTest {
         double startDistance = stationService.getDistance(startStation,startLon,startLat);
 
         List<StationInfo> stationInfoList = new ArrayList<>();
-        Map<String, Map<String,Edge>> graph = new HashMap<>();
+        Map<Long, Map<String,Edge>> graph = new HashMap<>();
         while(!nearerStationAtStartQueue.isEmpty()){
             StationInfo curr = nearerStationAtStartQueue.poll();
             lineService.setGraph(stationInfoMap,stationInfoList,graph,curr);
@@ -127,8 +127,8 @@ class LineServiceTest {
     }
 
     // 그래프 데이터 하드 코딩
-    private static void addData(Map<String, Map<String, Edge>> dataMap, String className, String nodeId, double weight) {
-        dataMap.computeIfAbsent(className, k -> new HashMap<>())
-                .put(nodeId, new Edge(nodeId, weight));
+    private static void addData(Map<Long, Map<String, Edge>> dataMap, long nodeId, String line, double weight) {
+        dataMap.computeIfAbsent(nodeId, k -> new HashMap<>())
+                .put(line, new Edge(nodeId, weight));
     }
 }

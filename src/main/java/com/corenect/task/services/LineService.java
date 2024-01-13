@@ -24,18 +24,22 @@ public class LineService extends AbstractService {
      * @param graph
      * @param curr
      */
-    public void setGraph(Map<Long,StationInfo> stationMap, List<StationInfo> stationInfoList, Map<String, Map<String,Edge>> graph, StationInfo curr){
+    public void setGraph(Map<Long,StationInfo> stationMap, List<StationInfo> stationInfoList, Map<Long, Map<String,Edge>> graph, StationInfo curr){
+        // 초기값 세팅
         long currStationId = curr.getStation().getStationId();
-        for(String line : curr.getLines()) addEdge(graph,String.valueOf(currStationId),"-1",0.0,line);
+        for(String line : curr.getLines()) addEdge(graph,currStationId,-1,0.0,line);
 
-        Set<String> lineName = new HashSet<>();
+        // 이전에 방문한 정류장 역순으로 탐색하면서 같은 노선이 있을 경우 간선 추가
+        // 이 때 체크한 노선이 또 있을 경우 이전에 체크한 정류장보다 더 뒤에 있기 때문에 패스
+        Set<String> visited = new HashSet<>();
         for(int i=stationInfoList.size()-1;i>=0;i--){
             StationInfo stationInfo = stationInfoList.get(i);
             long prevStationId = stationInfo.getStation().getStationId();
 
+            // 방문한 정류장과 현재 정류장의 노선 번호를 탐색하면서 같은 노선이 있는지 확인
             for(String existLine : stationInfo.getLines()){
                 for(String line : curr.getLines()){
-                    if(existLine.equals(line) && !lineName.contains(line)){
+                    if(existLine.equals(line) && !visited.contains(line)){
                         if(prevStationId != -1){
                             double distance = calculateDistance(
                                     curr.getStation().getLat(),
@@ -43,9 +47,9 @@ public class LineService extends AbstractService {
                                     stationMap.get(prevStationId).getStation().getLat(),
                                     stationMap.get(prevStationId).getStation().getLon()
                             );
-                            addEdge(graph, String.valueOf(prevStationId), String.valueOf(currStationId),distance,line);
+                            addEdge(graph, prevStationId, currStationId,distance,line);
                         }
-                        lineName.add(line);
+                        visited.add(line);
                         break;
                     }
                 }
@@ -62,7 +66,7 @@ public class LineService extends AbstractService {
      * @param destinationId
      * @param weight
      */
-    private static void addEdge(Map<String, Map<String,Edge>> graph, String sourceId, String destinationId, double weight, String line) {
+    private static void addEdge(Map<Long, Map<String,Edge>> graph, long sourceId, long destinationId, double weight, String line) {
         graph.computeIfAbsent(sourceId, k -> new HashMap<>()).put(line,new Edge(destinationId, weight));
     }
 
@@ -72,9 +76,18 @@ public class LineService extends AbstractService {
      * @param graph
      * @param stationInfoMap
      * @param startId
-     * @return
+     * @return Map<Long, List<RouteInfo>>
+     * key : 목적지 정류장 아이디
+     * value :  출발지부터 목적지까지의 이동 경로 리스트
+     * RouteInfo {
+     *     double distance : 정류장 간 이동 거리
+     *     String line : 이용한 노선
+     *     String departure : 출발 정류장 이름
+     *     String arrival : 도착 정류장 이름
+     * }
      */
-    public Map<Long, List<RouteInfo>> getRouteInfoMap(Map<String, Map<String, Edge>> graph, Map<Long, StationInfo> stationInfoMap, long startId) {
+    public Map<Long, List<RouteInfo>> getRouteInfoMap(Map<Long, Map<String, Edge>> graph, Map<Long, StationInfo> stationInfoMap, long startId) {
+        // 얻을 데이터 저장할 Map 세팅
         Set<Long> visited = new HashSet<>();
         Map<Long, Double> total = new HashMap<>();
         Map<Long, List<Double>> distance = new HashMap<>();
@@ -91,23 +104,25 @@ public class LineService extends AbstractService {
             arrival.put(key, new ArrayList<>());
         }
 
+        // 총 이동 거리가 작은 순으로 설정된 우선 순위 큐에 출발지 추가
         PriorityQueue<Long> priorityQueue = new PriorityQueue<>(Comparator.comparingDouble(total::get));
         priorityQueue.add(startId);
-
         while (!priorityQueue.isEmpty()) {
             long currentNodeId = priorityQueue.poll();
             Set<String> currentLines = stationInfoMap.get(currentNodeId).getLines();
             visited.add(currentNodeId);
 
-            String currentKey = String.valueOf(currentNodeId);
-            for (Edge neighbor : graph.get(currentKey).values()) {
-                String nextKey = neighbor.getNodeId();
-                if (nextKey.equals("-1")) continue;
+            // 연결된 간선을 따라 탐색 진행, 이 때 다음 노드가 -1인 경우 초기화를 위해 설정한 노드이기 떄문에 패스
+            for (Edge neighbor : graph.get(currentNodeId).values()) {
+                long nextNodeId = neighbor.getNodeId();
+                if (nextNodeId == -1) continue;
 
-                long nextNodeId = Long.parseLong(nextKey);
+                // 현재 정류장이 지나는 노선들과 다음 정류장이 지나는 노선들 중 같은 노선이 존재할 경우 이동 가능
                 double newDistance = total.get(currentNodeId) + neighbor.getWeight();
                 Set<String> nextLines = new HashSet<>(stationInfoMap.get(nextNodeId).getLines());
                 nextLines.retainAll(currentLines);
+
+                // 겹치는 노선이 존재하고 방문하지 않은 정류장이면서 이동 거리가 더 짧은 경우 값 최신화
                 if (!visited.contains(nextNodeId) && newDistance < total.get(nextNodeId) && !nextLines.isEmpty()) {
                     total.replace(nextNodeId, newDistance);
 
@@ -125,6 +140,7 @@ public class LineService extends AbstractService {
             }
         }
 
+        // 다익스트라 알고리즘으로 가져온 정보를 map에 저장
         Map<Long,List<RouteInfo>> routeInfoListMap = new HashMap<>();
         for(Map.Entry<Long, StationInfo> stationInfoEntry : stationInfoMap.entrySet()) {
             long stationId = stationInfoEntry.getKey();
@@ -178,6 +194,7 @@ public class LineService extends AbstractService {
 
     /**
      * Map<Long, List<RouteInfo>> routeInfoMap에서 목적지 위치 값에 따른 최초 출발지에서 목적지까지의 최종 경로 리턴
+     * 출발지에서 최초 정류장, 최종 정류장에서 목적지까지의 이동 경로를 추가
      * @param routeInfoMap
      * @param start
      * @param end

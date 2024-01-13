@@ -6,6 +6,8 @@ import com.corenect.task.models.StationInfo;
 import com.corenect.task.repositories.LineRepository;
 import com.corenect.task.repositories.StationRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -24,14 +26,10 @@ public class StationService extends AbstractService {
      * @param radius
      * @return
      */
-    public List<Station> getStationList(double lon, double lat, double radius){
-        List<Station> stationList = stationRepository.findAll();
-        List<Station> res = new ArrayList<>();
-        for(Station station : stationList){
-            double dist = calculateDistance(lat,lon,station.getLat(),station.getLon());
-            if(dist<=radius) res.add(station);
-        }
-        return res;
+    public List<Station> getStationList(double lon, double lat, double radius, int pageNum, int itemNum){
+        int start = (pageNum-1)*itemNum;
+        Pageable pageable = PageRequest.of(start,itemNum);
+        return stationRepository.getStationListWithinRange(lat,lon,radius,pageable);
     }
 
     /**
@@ -113,7 +111,8 @@ public class StationService extends AbstractService {
         double midLon = (startLon+endLon)/2.0;
         double midLat = (startLat+endLat)/2.0;
         double radius = calculateDistance(startLat,startLon,endLat,endLon);
-        List<StationInfo> stationInfoList = getStationInfoList(getStationList(midLon,midLat,radius));
+        Pageable pageable = PageRequest.of(0,10000);
+        List<StationInfo> stationInfoList = getStationInfoList(stationRepository.getStationListWithinRange(midLat,midLon,radius,pageable));
         return stationInfoList.stream()
                 .collect(Collectors.toMap(
                         stationInfo -> stationInfo.getStation().getStationId(),

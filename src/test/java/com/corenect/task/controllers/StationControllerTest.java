@@ -65,8 +65,10 @@ class StationControllerTest {
         );
 
         MvcResult result = mvc.perform(get("/stations")
-                        .param("lon","127.0365")
-                        .param("lat","37.5635")
+                        .param("lon","127.0366")
+                        .param("lat","37.5636")
+                        .param("pageNum","1")
+                        .param("itemNum","20")
                         .contentType(MediaType.APPLICATION_JSON)
                 )
                 .andExpect(status().isOk())
@@ -91,9 +93,11 @@ class StationControllerTest {
         );
 
         MvcResult result = mvc.perform(get("/stations")
-                        .param("lon","127.0365")
-                        .param("lat","37.5635")
-                        .param("radius","100")
+                        .param("lon","127.0366")
+                        .param("lat","37.5636")
+                        .param("radius","100.0")
+                        .param("pageNum","1")
+                        .param("itemNum","20")
                         .contentType(MediaType.APPLICATION_JSON)
                 )
                 .andExpect(status().isOk())

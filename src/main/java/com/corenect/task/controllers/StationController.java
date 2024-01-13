@@ -3,6 +3,8 @@ package com.corenect.task.controllers;
 import com.corenect.task.entities.Station;
 import com.corenect.task.models.response.SuccessResponse;
 import com.corenect.task.services.StationService;
+import com.corenect.task.validators.annotations.ValidDouble;
+import com.corenect.task.validators.annotations.ValidInt;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -17,9 +19,11 @@ public class StationController {
 
     /**
      * 특정 위치 정보 기반 인근 150m 이내 정류장 정보 검색
-     * @param lon : 경도
-     * @param lat : 위도
-     * @param radius : 반경(m) (default : 150)
+     * @param lonParams : 경도 (0보다 큰 double)
+     * @param latParams : 위도 (0보다 큰 double)
+     * @param radiusParams : 반경(m) (default : 150.0) (0보다 큰 double)
+     * @param pageNumParams : 페이지 번호 (0보다 큰 int)
+     * @param itemNumParams : 한 페이지 당 보여줄 아이템 수 (0보다 큰 int)
      * @return : Map<String,?>
      * result : List<StationInfo>
      * StationInfo{
@@ -35,11 +39,21 @@ public class StationController {
      */
     @GetMapping("/stations")
     public Map<String,?> getStationList(
-            @RequestParam(name="lon") double lon,
-            @RequestParam(name="lat") double lat,
-            @RequestParam(name="radius", required = false) Double radius
+            @RequestParam(name="lon") @ValidDouble String lonParams,
+            @RequestParam(name="lat") @ValidDouble String latParams,
+            @RequestParam(name="radius", required = false) @ValidDouble(required = false) String radiusParams,
+            @RequestParam(name="pageNum") @ValidInt String pageNumParams,
+            @RequestParam(name="itemNum") @ValidInt String itemNumParams
     ){
-        List<Station> stationList = stationService.getStationList(lon,lat,radius==null ? 150 : radius);
+        // 검증이 끝난 파라미터 형변환
+        double lon = Double.parseDouble(lonParams);
+        double lat = Double.parseDouble(latParams);
+        double radius = radiusParams==null ? 150.0 : Double.parseDouble(radiusParams);
+        int pageNum = Integer.parseInt(pageNumParams);
+        int itemNum = Integer.parseInt(itemNumParams);
+
+        // radius 반경 내의 정류장 리스트 리턴
+        List<Station> stationList = stationService.getStationList(lon,lat,radius,pageNum,itemNum);
         return new SuccessResponse.Builder(SuccessResponse.of.GET_SUCCESS)
                 .add("result",stationService.getStationInfoList(stationList))
                 .build().getResponse();
@@ -67,6 +81,7 @@ public class StationController {
             @RequestParam(name="stationName") String stationName,
             @RequestParam(name="lineName") String lineName
     ){
+        // 정류장 이름과 노선 이름을 가지는 정류장 리턴
         Station station = stationService.getStationDetail(stationName,lineName);
         return new SuccessResponse.Builder(SuccessResponse.of.GET_SUCCESS)
                 .add("result",stationService.getStationInfo(station))

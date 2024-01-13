@@ -41,7 +41,7 @@ class StationServiceTest {
     @Test
     public void getStationListTest(){
         List<Station> expectedValue = stationRepository.findByStationIdIn(new ArrayList<>(List.of(103000014L,103900085L,103900115L)));
-        assertThat(expectedValue).usingRecursiveComparison().isEqualTo(stationService.getStationList(127.0366,37.5636,150));
+        assertThat(expectedValue).usingRecursiveComparison().isEqualTo(stationService.getStationList(127.0366,37.5636,150,1,20));
     }
 
     @Test
@@ -69,7 +69,7 @@ class StationServiceTest {
         expectedValue.get(2).getLines().add("2222");
         expectedValue.get(2).getLines().add("141");
 
-        List<Station> stationList = stationService.getStationList(startLon,startLat,150);
+        List<Station> stationList = stationService.getStationList(startLon,startLat,150,1,20);
         assertThat(expectedValue).usingRecursiveComparison().isEqualTo(stationService.getStationInfoList(stationList));
     }
 
